@@ -84,7 +84,8 @@
                        (notzerop (hangul-djamo 'jung
                                                (aref hangul-queue 2)
                                                (jamo-offset moeum))))
-                  (zerop (aref hangul-queue 2)))
+                  (and (notzerop (aref hangul-queue 0))
+                       (zerop (aref hangul-queue 2))))
               (progn
                 (setq hangul-gyeob-mo nil)
                 (hangul3-input-method-jung (jamo-offset moeum)))
@@ -99,6 +100,7 @@
         ;;  )
         (if (and (>= char ?ㄱ) (<= char ?ㅎ))
             (if (and (notzerop (aref hangul-queue 0))
+                     (zerop (aref hangul-queue 2))
                      (setq hangul-gyeob-mo (cdr (assq char '((?ㅋ . ?ㅗ) (?ㅊ . ?ㅜ)
                                                              (?ㅁ . ?ㅡ) (?ㅍ . ?ㆍ))))))
                 (hangul3-input-method-jung (jamo-offset hangul-gyeob-mo))
