@@ -158,8 +158,12 @@
                            (hangul-s3p2-symbol-input-method-internal key)
                          (hangul-s3p2-input-method-internal key)))
                       ((commandp cmd)
+                       (setq hangul-gyeob-mo nil)
+                       (setq hangul-s3p2-symbol nil)
                        (call-interactively cmd))
                       (t
+                       (setq hangul-gyeob-mo nil)
+                       (setq hangul-s3p2-symbol nil)
                        (setq unread-command-events
                              (nconc (listify-key-sequence seq)
                                     unread-command-events))
