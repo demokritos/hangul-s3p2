@@ -35,7 +35,7 @@
 ;; a b c d e f g h i j k l m n o p q r s t u v w x y z
 ;; { | } ~
 
-;; `I' and `O' are not assigned in the original Shin Se-beol P2. I assign this
+;; `I' and `O' are not assigned in the original Shin Se-beol P2. I assign these
 ;; keys to `¡' and `¿' arbitrarily.
 (defconst hangul-s3p2-basic-keymap
   [ ?! ?/ ?# ?$ ?% ?& ?ㅌ ?\( ?\) ?* ?+ ?, ?- ?. ?ㅋ
@@ -107,7 +107,7 @@
           (hangul3-input-method-jung (jamo-offset char))
         (if (and (>= char ?ㄱ) (<= char ?ㅎ))
             (if (and (zerop (aref hangul-queue 2)) (zerop (aref hangul-queue 4))
-                     (eq (aref hangul-queue 0) (jamo-offset ?ㅇ))
+                     (= (aref hangul-queue 0) (jamo-offset ?ㅇ))
                      (memq char '(?ㄱ ?ㅈ ?ㅂ)))
                 (setq hangul-s3p2-symbol char)
               (if (and (notzerop (aref hangul-queue 0))
@@ -122,11 +122,11 @@
 
 (defun hangul-s3p2-symbol-input-method-internal (key)
   (let (char)
-    (cond ((eq hangul-s3p2-symbol ?ㄱ)
+    (cond ((= hangul-s3p2-symbol ?ㄱ)
            (setq char (aref hangul-s3p2-symbol-1-keymap (- key 33))))
-          ((eq hangul-s3p2-symbol ?ㅈ)
+          ((= hangul-s3p2-symbol ?ㅈ)
            (setq char (aref hangul-s3p2-symbol-2-keymap (- key 33))))
-          ((eq hangul-s3p2-symbol ?ㅂ)
+          ((= hangul-s3p2-symbol ?ㅂ)
            (setq char (aref hangul-s3p2-symbol-2-keymap (- key 33)))))
     (setq hangul-s3p2-symbol nil)
     (setq hangul-queue (make-vector 6 0))
