@@ -99,12 +99,16 @@
                   (and (notzerop (aref hangul-queue 0))
                        (zerop (aref hangul-queue 2))))
               (progn
-                (setq hangul-gyeob-mo nil)
+                (if (zerop (aref hangul-queue 2))
+                    (setq hangul-gyeob-mo nil))
                 (hangul3-input-method-jung (jamo-offset moeum)))
             (hangul3-input-method-jong (jamo-offset jaeum))))
       ;; not vector
       (if (and (>= char ?ㅏ) (<= char ?ㅣ))
-          (hangul3-input-method-jung (jamo-offset char))
+          (progn
+            (if (zerop (aref hangul-queue 2))
+                (setq hangul-gyeob-mo nil))
+            (hangul3-input-method-jung (jamo-offset char)))
         (if (and (>= char ?ㄱ) (<= char ?ㅎ))
             (if (and (zerop (aref hangul-queue 2)) (zerop (aref hangul-queue 4))
                      (= (aref hangul-queue 0) (jamo-offset ?ㅇ))
@@ -115,8 +119,10 @@
                        (setq hangul-gyeob-mo (cdr (assq char '((?ㅋ . ?ㅗ) (?ㅊ . ?ㅜ)
                                                                (?ㅁ . ?ㅡ) (?ㅍ . ?ㆍ))))))
                   (hangul3-input-method-jung (jamo-offset hangul-gyeob-mo))
+                (setq hangul-gyeob-mo nil)
                 (hangul3-input-method-cho (jamo-offset char))))
            (setq hangul-queue (make-vector 6 0))
+           (setq hangul-gyeob-mo nil)
            (insert (decode-char 'ucs char))
            (move-overlay quail-overlay (point) (point)))))))
 
@@ -158,7 +164,6 @@
                            (hangul-s3p2-symbol-input-method-internal key)
                          (hangul-s3p2-input-method-internal key)))
                       ((commandp cmd)
-                       (setq hangul-gyeob-mo nil)
                        (setq hangul-s3p2-symbol nil)
                        (call-interactively cmd))
                       (t
