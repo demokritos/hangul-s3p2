@@ -104,7 +104,7 @@
                 (hangul3-input-method-jung (jamo-offset moeum)))
             (hangul3-input-method-jong (jamo-offset jaeum))))
       ;; not vector
-      (if (and (>= char ?ㅏ) (<= char ?ㅣ))
+      (if (or (and (>= char ?ㅏ) (<= char ?ㅣ)) (= char ?ㆍ))
           (progn
             (if (zerop (aref hangul-queue 2))
                 (setq hangul-gyeob-mo nil))
