@@ -133,7 +133,7 @@
           ((= hangul-s3p2-symbol ?ㅈ)
            (setq char (aref hangul-s3p2-symbol-2-keymap (- key 33))))
           ((= hangul-s3p2-symbol ?ㅂ)
-           (setq char (aref hangul-s3p2-symbol-2-keymap (- key 33)))))
+           (setq char (aref hangul-s3p2-symbol-3-keymap (- key 33)))))
     (setq hangul-s3p2-symbol nil)
     (setq hangul-queue (make-vector 6 0))
     (quail-delete-region)
