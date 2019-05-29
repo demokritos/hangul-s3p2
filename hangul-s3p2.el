@@ -81,6 +81,23 @@
 (defvar hangul-gyeob-mo nil)
 (defvar hangul-s3p2-symbol nil)
 
+;; ㅃ은 받침으로 없는데 hangul.el에는 받침으로 쓸 수 있게 정의되어
+;; 있어 가져와서 고침.
+(defconst hangul-djamo-table
+  '((cho . ((1 . [1])                   ; Choseong
+            (7 . [7])
+            (18 . [18])
+            (21 . [21])
+            (24 . [24])))
+    (jung . ((39 . [31 32 51])          ; Jungseong
+             (44 . [35 36 51])
+             (49 . [51])))
+    (jong . ((1 . [1 21])               ; Jongseong
+             (4 . [24 30])
+             (9 . [1 17 18 21 28 29 30])
+             (18 . [-1 21])              ;; ㅃ 자리에 -1을 넣음
+             (21 . [21])))))
+
 (defsubst jamo-offset (char)
   (- char ?ㄱ -1))
 
