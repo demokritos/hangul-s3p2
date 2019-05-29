@@ -93,6 +93,7 @@
         (let ((jaeum (aref char 0)) (moeum (aref char 1)))
           (if (or (and hangul-gyeob-mo
                        (notzerop (aref hangul-queue 2))
+                       (zerop (aref hangul-queue 3))
                        (notzerop (hangul-djamo 'jung
                                                (aref hangul-queue 2)
                                                (jamo-offset moeum))))
@@ -121,10 +122,10 @@
                   (hangul3-input-method-jung (jamo-offset hangul-gyeob-mo))
                 (setq hangul-gyeob-mo nil)
                 (hangul3-input-method-cho (jamo-offset char))))
-           (setq hangul-queue (make-vector 6 0))
-           (setq hangul-gyeob-mo nil)
-           (insert (decode-char 'ucs char))
-           (move-overlay quail-overlay (point) (point)))))))
+          (setq hangul-queue (make-vector 6 0))
+          (setq hangul-gyeob-mo nil)
+          (insert (decode-char 'ucs char))
+          (move-overlay quail-overlay (point) (point)))))))
 
 (defun hangul-s3p2-symbol-input-method-internal (key)
   (let (char)
