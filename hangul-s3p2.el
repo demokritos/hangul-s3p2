@@ -101,6 +101,7 @@
         (let ((jaeum (aref char 0)) (moeum (aref char 1)))
           (if (or (and hangul-gyeob-mo
                        (notzerop (aref hangul-queue 2))
+                       (zerop (aref hangul-queue 3))
                        (notzerop (hangul-djamo 'jung
                                                (aref hangul-queue 2)
                                                (jamo-offset moeum))))
