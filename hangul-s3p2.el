@@ -127,11 +127,11 @@
   (- char ?ㄱ -1))
 
 (defun yet-hangul-character (cho jung jong)
-  (if (> cho #x3130)
+  (if (>= cho #x3130)
       (setq cho (aref hangul-yet-jamo-table cho)))
-  (if (> jung #x3130)
+  (if (>= jung #x3130)
       (setq jung (aref hangul-yet-jamo-table jung)))
-  (if (> jong #x3130)
+  (if (>= jong #x3130)
       (setq jong (aref hangul-yet-jamo-table (+ #x100 jong))))
   (if (and (/= cho 0) (/= jung 0))
       (if (= jong 0)
@@ -160,6 +160,8 @@
             ""
           (string syllable))))))
 
+;; Redefine `hangul-insert-character' in hangul.el to enable
+;; composing characters containing arae-a.
 (defun hangul-insert-character (&rest queues)
   "Insert characters generated from QUEUES.
 Each queue has the same form as `hangul-queue'.
