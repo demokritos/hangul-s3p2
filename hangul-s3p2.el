@@ -80,6 +80,7 @@
 
 (defvar hangul-gyeob-mo nil)
 (defvar hangul-s3p2-symbol nil)
+(defvar hangul-pureosseugi nil)
 
 ;; ㅃ은 받침으로 없는데 hangul.el에는 받침으로 쓸 수 있게 정의되어
 ;; 있어 가져와서 고침.
@@ -129,6 +130,12 @@
       (setq i (1+ i)))
     table))
 
+(defun toggle-hangul-pureosseugi ()
+  "Toggle hangul pureosseugi, which is a method inputting a
+hangul character jamo by jamo, not completing a hangul syllable."
+  (interactive)
+  (setq hangul-pureosseugi (not hangul-pureosseugi)))
+
 (defsubst jamo-offset (char)
   (- char ?ㄱ -1))
 
@@ -158,22 +165,50 @@ case, it translates those jamo using `hangul-yet-jamo-table'."
             (string #x115F #x1160 jong)
           "")))))
 
+(defun pureosseun-hangul-character (cho jung jong)
+  "Return a jamo string without completing a hangul syllable."
+  (if (= cho 0)
+      (setq cho "")
+    (if (> cho #x3130)
+        (setq cho (string cho))
+      (setq cho (string cho #x1160))))
+  (if (= jung 0)
+      (setq jung "")
+    (if (> jung ?ㆍ)
+        (setq jung (string #x115F (aref hangul-yet-jamo-table jung)))
+      (if (> jung #x3130)
+          (setq jung (string jung))
+        (setq jung (string #x115F jung)))))
+  (if (= jong 0)
+      (setq jong "")
+    (if (> jong #x3130)
+        (setq jong (string jong))
+      (setq jong (string #x115F #x1160 jong))))
+  (concat cho jung jong)
+  )
+
 (defun compose-hangul-character (queue)
   "Return a hangul character composed of jamo in QUEUE.
-It uses the chod-ga-ggeut composition for characters containing
+It uses the cheod-ga-ggeut composition for characters containing
 arae-a. Note that, actually, a chod-ga-ggeut character is
 composed of multiple character codes."
   (let ((cho (+ (aref queue 0) (hangul-djamo 'cho (aref queue 0) (aref queue 1))))
         (jung (+ (aref queue 2) (hangul-djamo 'jung (aref queue 2) (aref queue 3))))
         (jong (+ (aref queue 4) (hangul-djamo 'jong (aref queue 4) (aref queue 5)))))
-    (if (= (aref queue 2) (jamo-offset ?ㆍ))
-        (yet-hangul-character (if (= cho 0) cho (+ #x3130 cho))
-                              (if (= jung 0) jung (+ #x3130 jung))
-                              (if (= jong 0) jong (+ #x3130 jong)))
-      (let ((syllable (hangul-character cho jung jong)))
-        (if (eq syllable "")
-            ""
-          (string syllable))))))
+    (if hangul-pureosseugi
+        (pureosseun-hangul-character (if (= cho 0) cho (+ #x3130 cho))
+                                     (if (= jung 0) jung (+ #x3130 jung))
+                                     (if (= jong 0) jong (+ #x3130 jong)))
+      (if (and (or (notzerop (aref queue 0)) (notzerop (aref queue 4))
+                   (notzerop (aref queue 3)))
+               (= (aref queue 2) (jamo-offset ?ㆍ)))
+          (yet-hangul-character (if (= cho 0) cho (+ #x3130 cho))
+                                (if (= jung 0) jung (+ #x3130 jung))
+                                (if (= jong 0) jong (+ #x3130 jong)))
+        (let ((syllable (hangul-character cho jung jong)))
+          (if (eq syllable "")
+              ""
+            (string syllable)))))))
 
 ;; Redefine `hangul-insert-character' in hangul.el to enable
 ;; composing characters containing arae-a.
