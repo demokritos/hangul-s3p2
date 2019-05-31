@@ -83,6 +83,7 @@
 
 ;; ㅃ은 받침으로 없는데 hangul.el에는 받침으로 쓸 수 있게 정의되어
 ;; 있어 가져와서 고침.
+;; 아래아 겹모음을 입력할 수 있게 고침.
 (defconst hangul-djamo-table
   '((cho . ((1 . [1])                   ; Choseong
             (7 . [7])
@@ -99,6 +100,11 @@
              (18 . [-1 21])              ;; ㅃ 자리에 -1을 넣음
              (21 . [21])))))
 
+;; 한글 호환 자모 영역(#x3130)의 자모를 첫가끝 자모 영역(#x1100)으로 변환하기
+;; 위한 표. 인덱스가 한글 호환 자모 영역의 코드임. 한글 호환 자모 영역은 초성과
+;; 종성의 구분이 없으므로 종성을 #x100만큼 이동시킴. 아래아 겹모음은 한글 호환
+;; 자모 영역에 arae-a-i 하나만 정의되어 있는데 임으로 #x1100 영역에 정의된 네
+;; 가지로 임의로 정했다. 따라서 없는 코드를 있는 것으로 생각하자.
 (defconst hangul-yet-jamo-table
   (let ((table (make-char-table 'trans-yojeum-yet 0))
         (cho [ ?ㄱ ?ㄲ ?ㄴ ?ㄷ ?ㄸ ?ㄹ ?ㅁ ?ㅂ ?ㅃ ?ㅅ ?ㅆ
@@ -127,6 +133,9 @@
   (- char ?ㄱ -1))
 
 (defun yet-hangul-character (cho jung jong)
+  "Return a cheod-ga-ggeut combination of CHO, JUNG and JONG.
+It can receive modern hangul jamo for CHO, JUNG and JONG. In that
+case, it translates those jamo using `hangul-yet-jamo-table'."
   (if (> cho #x3130)
       (setq cho (aref hangul-yet-jamo-table cho)))
   (if (> jung #x3130)
@@ -150,6 +159,10 @@
           "")))))
 
 (defun compose-hangul-character (queue)
+  "Return a hangul character composed of jamo in QUEUE.
+It uses the chod-ga-ggeut composition for characters containing
+arae-a. Note that, actually, a chod-ga-ggeut character is
+composed of multiple character codes."
   (let ((cho (+ (aref queue 0) (hangul-djamo 'cho (aref queue 0) (aref queue 1))))
         (jung (+ (aref queue 2) (hangul-djamo 'jung (aref queue 2) (aref queue 3))))
         (jong (+ (aref queue 4) (hangul-djamo 'jong (aref queue 4) (aref queue 5)))))
