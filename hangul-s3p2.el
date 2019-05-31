@@ -139,7 +139,7 @@
         (string cho jung jong))
     (if (/= cho 0)
         (if (= jong 0)
-            (string cho)
+            (string cho #x1160)
           (string cho #x1160 jong))
       (if (/= jung 0)
           (if (= jong 0)
