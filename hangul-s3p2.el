@@ -143,10 +143,10 @@
           (string cho #x1160 jong))
       (if (/= jung 0)
           (if (= jong 0)
-              (string jung)
-            (string #x115f jung jong))
+              (string #x115F jung)
+            (string #x115F jung jong))
         (if (/= jong 0)
-            (string jong)
+            (string #x115F #x1160 jong)
           "")))))
 
 (defun compose-hangul-character (queue)
