@@ -91,15 +91,97 @@
             (24 . [24])))
     (jung . ((39 . [31 32 51])          ; Jungseong
              (44 . [35 36 51])
-             (49 . [51])))
+             (49 . [51])
+             (93 . [35 44 51 93])))     ;; 아래아 , ㅓ ㅜ ㅣ ㆍ
     (jong . ((1 . [1 21])               ; Jongseong
              (4 . [24 30])
              (9 . [1 17 18 21 28 29 30])
              (18 . [-1 21])              ;; ㅃ 자리에 -1을 넣음
              (21 . [21])))))
 
+(defconst hangul-yet-jamo-table
+  (let ((table (make-char-table 'trans-yojeum-yet 0))
+        (cho [ ?ㄱ ?ㄲ ?ㄴ ?ㄷ ?ㄸ ?ㄹ ?ㅁ ?ㅂ ?ㅃ ?ㅅ ?ㅆ
+                   ?ㅇ ?ㅈ ?ㅉ ?ㅊ ?ㅋ ?ㅌ ?ㅍ ?ㅎ ])
+        (jong [ ?ㄱ ?ㄲ ?ㄳ ?ㄴ ?ㄵ ?ㄶ ?ㄷ ?ㄹ ?ㄺ ?ㄻ ?ㄼ ?ㄽ ?ㄾ ?ㄿ ?ㅀ
+                    ?ㅁ ?ㅂ ?ㅄ ?ㅅ ?ㅆ ?ㅇ ?ㅈ ?ㅊ ?ㅋ ?ㅌ ?ㅍ ?ㅎ ])
+        (i 0))
+    (while (< i (length cho))
+      (aset table (aref cho i) (+ #x1100 i))
+      (setq i (1+ i)))
+    (setq i 0)
+    (while (< i 21)
+      (aset table (+ ?ㅏ i) (+ #x1161 i))
+      (setq i (1+ i)))
+    (setq i 0)
+    (while (< i 5)
+      (aset table (+ ?ㆍ i) (+ #x119E i))
+      (setq i (1+ i)))
+    (setq i 0)
+    (while (< i (length jong))
+      (aset table (+ #x100 (aref jong i)) (+ #x11A8 i))
+      (setq i (1+ i)))
+    table))
+
 (defsubst jamo-offset (char)
   (- char ?ㄱ -1))
+
+(defun yet-hangul-character (cho jung jong)
+  (if (> cho #x3130)
+      (setq cho (aref hangul-yet-jamo-table cho)))
+  (if (> jung #x3130)
+      (setq jung (aref hangul-yet-jamo-table jung)))
+  (if (> jong #x3130)
+      (setq jong (aref hangul-yet-jamo-table (+ #x100 jong))))
+  (if (and (/= cho 0) (/= jung 0))
+      (if (= jong 0)
+          (string cho jung)
+        (string cho jung jong))
+    (if (/= cho 0)
+        (if (= jong 0)
+            (string cho)
+          (string cho #x1160 jong))
+      (if (/= jung 0)
+          (if (= jong 0)
+              (string jung)
+            (string #x115f jung jong))
+        (if (/= jong 0)
+            (string jong)
+          "")))))
+
+(defun compose-hangul-character (queue)
+  (let ((cho (+ (aref queue 0) (hangul-djamo 'cho (aref queue 0) (aref queue 1))))
+        (jung (+ (aref queue 2) (hangul-djamo 'jung (aref queue 2) (aref queue 3))))
+        (jong (+ (aref queue 4) (hangul-djamo 'jong (aref queue 4) (aref queue 5)))))
+    (if (= (aref queue 2) (jamo-offset ?ㆍ))
+        (yet-hangul-character (+ #x3130 cho) (+ #x3130 jung) (+ #x3130 jong))
+      (hangul-character cho jung jong))))
+
+(defun hangul-insert-character (&rest queues)
+  "Insert characters generated from QUEUES.
+Each queue has the same form as `hangul-queue'.
+Setup `quail-overlay' to the last character."
+  (if (and mark-active transient-mark-mode)
+      (progn
+        (delete-region (region-beginning) (region-end))
+        (deactivate-mark)))
+  (quail-delete-region)
+  (let* ((first (car queues))
+         (syllables (compose-hangul-character first))
+         (move (if (sequencep syllables)
+                   (length syllables)
+                 1)))
+    (insert syllables)
+    (move-overlay quail-overlay (overlay-start quail-overlay) (point))
+
+    (dolist (queue (cdr queues))
+      (setq syllables (compose-hangul-character queue))
+      (insert syllables)
+      (move-overlay quail-overlay
+                    (+ (overlay-start quail-overlay) move) (point))
+      (setq move (if (sequencep syllables)
+                     (length syllables)
+                   1)))))
 
 ;; Support function for `hangul-s3p2-input-method'.  Actually, this
 ;; function handles the Hangul Shin Se-beol P2.  KEY is an entered key
