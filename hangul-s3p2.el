@@ -155,7 +155,10 @@
         (jong (+ (aref queue 4) (hangul-djamo 'jong (aref queue 4) (aref queue 5)))))
     (if (= (aref queue 2) (jamo-offset ?ㆍ))
         (yet-hangul-character (+ #x3130 cho) (+ #x3130 jung) (+ #x3130 jong))
-      (hangul-character cho jung jong))))
+      (let ((syllable (hangul-character cho jung jong)))
+        (if (eq syllable "")
+            ""
+          (string syllable))))))
 
 (defun hangul-insert-character (&rest queues)
   "Insert characters generated from QUEUES.
@@ -168,20 +171,15 @@ Setup `quail-overlay' to the last character."
   (quail-delete-region)
   (let* ((first (car queues))
          (syllables (compose-hangul-character first))
-         (move (if (sequencep syllables)
-                   (length syllables)
-                 1)))
+         (move (length syllables)))
     (insert syllables)
     (move-overlay quail-overlay (overlay-start quail-overlay) (point))
-
     (dolist (queue (cdr queues))
       (setq syllables (compose-hangul-character queue))
       (insert syllables)
       (move-overlay quail-overlay
                     (+ (overlay-start quail-overlay) move) (point))
-      (setq move (if (sequencep syllables)
-                     (length syllables)
-                   1)))))
+      (setq move (length syllables)))))
 
 ;; Support function for `hangul-s3p2-input-method'.  Actually, this
 ;; function handles the Hangul Shin Se-beol P2.  KEY is an entered key
