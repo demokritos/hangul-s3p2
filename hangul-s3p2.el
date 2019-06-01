@@ -183,13 +183,12 @@ case, it translates those jamo using `hangul-yed-jamo-table'."
     (if (and (> jong #x3130) (<= jong ?ㅎ))
         (setq jong (string jong))
       (setq jong (string #x115F #x1160 jong))))
-  (concat cho jung jong)
-  )
+  (concat cho jung jong))
 
 (defun compose-hangul-character (queue)
   "Return a hangul character composed of jamo in QUEUE.
 It uses the cheod-ga-ggeut composition for characters containing
-arae-a. Note that, actually, a chod-ga-ggeut character is
+arae-a. Note that, actually, a cheod-ga-ggeut character is
 composed of multiple character codes."
   (let ((cho (+ (aref queue 0) (hangul-djamo 'cho (aref queue 0) (aref queue 1))))
         (jung (+ (aref queue 2) (hangul-djamo 'jung (aref queue 2) (aref queue 3))))
