@@ -82,9 +82,8 @@
 (defvar hangul-s3p2-symbol nil)
 (defvar hangul-pureosseugi nil)
 
-;; ㅃ은 받침으로 없는데 hangul.el에는 받침으로 쓸 수 있게 정의되어
-;; 있어 가져와서 고침.
-;; 아래아 겹모음을 입력할 수 있게 고침.
+;; ㅃ은 받침으로 없는데 hangul.el에는 받침으로 쓸 수 있게 정의되어 있어 가져와서
+;; 고침. 아래아 겹모음을 입력할 수 있게 고침.
 (defconst hangul-djamo-table
   '((cho . ((1 . [1])                   ; Choseong
             (7 . [7])
@@ -104,10 +103,10 @@
 ;; 한글 호환 자모 영역(#x3130)의 자모를 첫가끝 자모 영역(#x1100)으로 변환하기
 ;; 위한 표. 인덱스가 한글 호환 자모 영역의 코드임. 한글 호환 자모 영역은 초성과
 ;; 종성의 구분이 없으므로 종성을 #x100만큼 이동시킴. 아래아 겹모음은 한글 호환
-;; 자모 영역에 arae-a-i 하나만 정의되어 있는데 임으로 #x1100 영역에 정의된 네
-;; 가지로 임의로 정했다. 따라서 없는 코드를 있는 것으로 생각하자.
-(defconst hangul-yet-jamo-table
-  (let ((table (make-char-table 'trans-yojeum-yet 0))
+;; 자모 영역에 arae-a-i 하나만 정의되어 있는데 #x1100 영역에 정의된 네 가지로
+;; 임의로 정했다. 따라서 없는 코드를 있는 것으로 생각하자.
+(defconst hangul-yed-jamo-table
+  (let ((table (make-char-table 'trans-yojeum-yed 0))
         (cho [ ?ㄱ ?ㄲ ?ㄴ ?ㄷ ?ㄸ ?ㄹ ?ㅁ ?ㅂ ?ㅃ ?ㅅ ?ㅆ
                    ?ㅇ ?ㅈ ?ㅉ ?ㅊ ?ㅋ ?ㅌ ?ㅍ ?ㅎ ])
         (jong [ ?ㄱ ?ㄲ ?ㄳ ?ㄴ ?ㄵ ?ㄶ ?ㄷ ?ㄹ ?ㄺ ?ㄻ ?ㄼ ?ㄽ ?ㄾ ?ㄿ ?ㅀ
@@ -139,16 +138,16 @@ hangul character jamo by jamo, not completing a hangul syllable."
 (defsubst jamo-offset (char)
   (- char ?ㄱ -1))
 
-(defun yet-hangul-character (cho jung jong)
+(defun yed-hangul-character (cho jung jong)
   "Return a cheod-ga-ggeut combination of CHO, JUNG and JONG.
 It can receive modern hangul jamo for CHO, JUNG and JONG. In that
-case, it translates those jamo using `hangul-yet-jamo-table'."
+case, it translates those jamo using `hangul-yed-jamo-table'."
   (if (> cho #x3130)
-      (setq cho (aref hangul-yet-jamo-table cho)))
+      (setq cho (aref hangul-yed-jamo-table cho)))
   (if (> jung #x3130)
-      (setq jung (aref hangul-yet-jamo-table jung)))
+      (setq jung (aref hangul-yed-jamo-table jung)))
   (if (> jong #x3130)
-      (setq jong (aref hangul-yet-jamo-table (+ #x100 jong))))
+      (setq jong (aref hangul-yed-jamo-table (+ #x100 jong))))
   (if (and (/= cho 0) (/= jung 0))
       (if (= jong 0)
           (string cho jung)
@@ -175,7 +174,7 @@ case, it translates those jamo using `hangul-yet-jamo-table'."
   (if (= jung 0)
       (setq jung "")
     (if (> jung ?ㆍ)
-        (setq jung (string #x115F (aref hangul-yet-jamo-table jung)))
+        (setq jung (string #x115F (aref hangul-yed-jamo-table jung)))
       (if (> jung #x3130)
           (setq jung (string jung))
         (setq jung (string #x115F jung)))))
@@ -202,7 +201,7 @@ composed of multiple character codes."
       (if (and (or (notzerop (aref queue 0)) (notzerop (aref queue 4))
                    (notzerop (aref queue 3)))
                (= (aref queue 2) (jamo-offset ?ㆍ)))
-          (yet-hangul-character (if (= cho 0) cho (+ #x3130 cho))
+          (yed-hangul-character (if (= cho 0) cho (+ #x3130 cho))
                                 (if (= jung 0) jung (+ #x3130 jung))
                                 (if (= jong 0) jong (+ #x3130 jong)))
         (let ((syllable (hangul-character cho jung jong)))
