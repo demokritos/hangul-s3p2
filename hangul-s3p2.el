@@ -138,29 +138,6 @@ hangul character jamo by jamo, not completing a hangul syllable."
 (defsubst jamo-offset (char)
   (- char ?ㄱ -1))
 
-(defsubst make-hangul-character-from-queue (queue)
-  (if (zerop (apply #'+ (append queue nil)))
-      nil
-    (hangul-character
-     (+ (aref queue 0) (hangul-djamo 'cho (aref queue 0) (aref queue 1)))
-     (+ (aref queue 2) (hangul-djamo 'jung (aref queue 2) (aref queue 3)))
-     (+ (aref queue 4) (hangul-djamo 'jong (aref queue 4) (aref queue 5))))))
-
-;; Copied hangul.el's `hangul3-input-method-cho' and modified to fit to the
-;; returning version.
-(defun hangul-s3p2-input-method-cho (char)
-  (if (cond ((and (zerop (aref hangul-queue 0))
-                  (zerop (aref hangul-queue 4)))
-             (aset hangul-queue 0 char))
-            ((and (zerop (aref hangul-queue 1))
-                  (zerop (aref hangul-queue 2))
-                  (notzerop (hangul-djamo 'cho (aref hangul-queue 0) char)))
-             (aset hangul-queue 1 char)))
-      (progn
-        (hangul-insert-character hangul-queue)
-        nil)
-    (make-hangul-character-from-queue hangul-queue)))
-
 (defun yed-hangul-character (cho jung jong)
   "Return a cheod-ga-ggeut combination of CHO, JUNG and JONG.
 It can receive modern hangul jamo for CHO, JUNG and JONG. In that
@@ -254,6 +231,21 @@ Setup `quail-overlay' to the last character."
                     (+ (overlay-start quail-overlay) move) (point))
       (setq move (length syllables)))))
 
+;; Copied hangul.el's `hangul3-input-method-cho' and modified to fit to the
+;; returning version.
+(defun hangul-s3p2-input-method-cho (char)
+  (if (cond ((and (zerop (aref hangul-queue 0))
+                  (zerop (aref hangul-queue 4)))
+             (aset hangul-queue 0 char))
+            ((and (zerop (aref hangul-queue 1))
+                  (zerop (aref hangul-queue 2))
+                  (notzerop (hangul-djamo 'cho (aref hangul-queue 0) char)))
+             (aset hangul-queue 1 char)))
+      (progn
+        (hangul-insert-character hangul-queue)
+        nil)
+    (compose-hangul-character hangul-queue)))
+
 ;; Support function for `hangul-s3p2-input-method'.  Actually, this
 ;; function handles the Hangul Shin Se-beol P2.  KEY is an entered key
 ;; code used for looking up `hangul-s3p2-basic-keymap'."
@@ -303,15 +295,13 @@ Setup `quail-overlay' to the last character."
                           (quail-delete-region)
                           (setq hangul-queue (make-vector 6 0)
                                 unread-command-events (cons key unread-command-events))
-                          (list syllable))))))
-          (let ((syllable (make-hangul-character-from-queue hangul-queue)))
+                          (append syllable nil))))))
+          (let ((syllable (compose-hangul-character hangul-queue)))
             (setq hangul-queue (make-vector 6 0))
             (setq hangul-gyeob-mo nil)
             (quail-delete-region)
             (move-overlay quail-overlay (point) (point))
-            (if syllable
-                (list syllable char)
-              (list char))))))))
+            (append syllable (list char))))))))
 
 (defun hangul-s3p2-symbol-input-method-internal (key)
   (let (char)
@@ -324,7 +314,6 @@ Setup `quail-overlay' to the last character."
     (setq hangul-s3p2-symbol nil)
     (setq hangul-queue (make-vector 6 0))
     (quail-delete-region)
-    ;(insert (decode-char 'ucs char))
     (move-overlay quail-overlay (point) (point))
     (list char)))
 
@@ -362,12 +351,10 @@ Setup `quail-overlay' to the last character."
                        (setq unread-command-events
                              (nconc (listify-key-sequence seq)
                                     unread-command-events))
-                       (let ((syllable (make-hangul-character-from-queue
-                                       hangul-queue)))
+                       (let ((syllable (compose-hangul-character hangul-queue)))
                          (setq hangul-queue (make-vector 6 0))
                          (quail-delete-region)
-                         (throw 'exit-input-loop
-                                (and syllable (list syllable)))))))))))))
+                         (throw 'exit-input-loop (append syllable nil))))))))))))
 
 ;; From old hangul.el
 (defsubst symbol+ (&rest syms)
