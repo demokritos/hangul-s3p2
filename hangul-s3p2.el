@@ -152,26 +152,26 @@
                     (hangul3-input-method-jung (jamo-offset hangul-gyeob-mo))
                     nil)
                 (setq hangul-gyeob-mo nil)
-                (let ((eumjeol (make-hangul-character-from-queue hangul-queue)))
-                  (if (and eumjeol
+                (let ((syllable (make-hangul-character-from-queue hangul-queue)))
+                  (if (and syllable
                            (zerop (hangul-djamo 'cho
                                                 (aref hangul-queue 0)
                                                 (jamo-offset char))))
                       (progn
                         (quail-delete-region)
                         (setq hangul-queue (make-vector 6 0))
-                        (setq unread-input-method-events
-                              (cons (list key) unread-input-method-events))
-                        (list eumjeol))
+                        (setq unread-command-events
+                              (cons key unread-command-events))
+                        (list syllable))
                     (hangul3-input-method-cho (jamo-offset char))
                     nil))))
-          (let ((eumjeol (make-hangul-character-from-queue hangul-queue)))
+          (let ((syllable (make-hangul-character-from-queue hangul-queue)))
             (setq hangul-queue (make-vector 6 0))
             (setq hangul-gyeob-mo nil)
             (quail-delete-region)
             (move-overlay quail-overlay (point) (point))
-            (if eumjeol
-                (list eumjeol char)
+            (if syllable
+                (list syllable char)
               (list char))))))))
 
 (defun hangul-s3p2-symbol-input-method-internal (key)
@@ -212,9 +212,9 @@
                            (throw 'exit-input-loop
                                   (hangul-s3p2-symbol-input-method-internal
                                    key)))
-                       (let ((eumjeols (hangul-s3p2-input-method-internal key)))
-                         (if eumjeols
-                             (throw 'exit-input-loop eumjeols))))
+                       (let ((syllables (hangul-s3p2-input-method-internal key)))
+                         (if syllables
+                             (throw 'exit-input-loop syllables))))
                       ((commandp cmd)
                        (setq hangul-s3p2-symbol nil)
                        (call-interactively cmd))
@@ -223,12 +223,12 @@
                        (setq unread-command-events
                              (nconc (listify-key-sequence seq)
                                     unread-command-events))
-                       (let ((eumjeol (make-hangul-character-from-queue
+                       (let ((syllable (make-hangul-character-from-queue
                                        hangul-queue)))
                          (setq hangul-queue (make-vector 6 0))
                          (quail-delete-region)
                          (throw 'exit-input-loop
-                                (and eumjeol (list eumjeol)))))))))))))
+                                (and syllable (list syllable)))))))))))))
 
 ;; From old hangul.el
 (defsubst symbol+ (&rest syms)
