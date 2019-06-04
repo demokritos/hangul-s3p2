@@ -246,6 +246,20 @@ Setup `quail-overlay' to the last character."
         nil)
     (compose-hangul-character hangul-queue)))
 
+;; Redefine `hangul-delete-backward-char' in hangul.el.
+;; Just added keyword `:done' return when `hangul-queue' is empty.
+(defun hangul-delete-backward-char ()
+  "Delete the previous hangul character by Jaso units."
+  (interactive)
+  (let ((i 5))
+    (while (and (> i 0) (zerop (aref hangul-queue i)))
+      (setq i (1- i)))
+    (aset hangul-queue i 0))
+  (if (notzerop (apply '+ (append hangul-queue nil)))
+      (hangul-insert-character hangul-queue)
+    (delete-char -1)
+    :done))
+
 ;; Support function for `hangul-s3p2-input-method'.  Actually, this
 ;; function handles the Hangul Shin Se-beol P2.  KEY is an entered key
 ;; code used for looking up `hangul-s3p2-basic-keymap'."
@@ -344,7 +358,8 @@ Setup `quail-overlay' to the last character."
                              (throw 'exit-input-loop syllables))))
                       ((commandp cmd)
                        (setq hangul-s3p2-symbol nil)
-                       (call-interactively cmd))
+                       (if (eq (call-interactively cmd) :done)
+                           (throw 'exit-input-loop nil)))
                       (t
                        (setq hangul-s3p2-symbol nil)
                        (setq unread-command-events
