@@ -296,11 +296,11 @@ Setup `quail-overlay' to the last character."
                           (setq hangul-queue (make-vector 6 0)
                                 unread-command-events (cons key unread-command-events))
                           (append syllable nil))))))
-          (let ((syllable (compose-hangul-character hangul-queue)))
+          (let ((syllable (and (notzerop (apply #'+ (append hangul-queue nil)))
+                               (compose-hangul-character hangul-queue))))
             (setq hangul-queue (make-vector 6 0))
             (setq hangul-gyeob-mo nil)
             (quail-delete-region)
-            (move-overlay quail-overlay (point) (point))
             (append syllable (list char))))))))
 
 (defun hangul-s3p2-symbol-input-method-internal (key)
@@ -314,7 +314,6 @@ Setup `quail-overlay' to the last character."
     (setq hangul-s3p2-symbol nil)
     (setq hangul-queue (make-vector 6 0))
     (quail-delete-region)
-    (move-overlay quail-overlay (point) (point))
     (list char)))
 
 (defun hangul-s3p2-input-method (key)
@@ -351,7 +350,8 @@ Setup `quail-overlay' to the last character."
                        (setq unread-command-events
                              (nconc (listify-key-sequence seq)
                                     unread-command-events))
-                       (let ((syllable (compose-hangul-character hangul-queue)))
+                       (let ((syllable (and (notzerop (apply #'+ (append hangul-queue nil)))
+                                            (compose-hangul-character hangul-queue))))
                          (setq hangul-queue (make-vector 6 0))
                          (quail-delete-region)
                          (throw 'exit-input-loop (append syllable nil))))))))))))
