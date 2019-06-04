@@ -109,6 +109,21 @@
      (+ (aref queue 2) (hangul-djamo 'jung (aref queue 2) (aref queue 3)))
      (+ (aref queue 4) (hangul-djamo 'jong (aref queue 4) (aref queue 5))))))
 
+;; Copied hangul.el's `hangul3-input-method-cho' and modified to fit to the
+;; returning version.
+(defun hangul-s3p2-input-method-cho (char)
+  (if (cond ((and (zerop (aref hangul-queue 0))
+                  (zerop (aref hangul-queue 4)))
+             (aset hangul-queue 0 char))
+            ((and (zerop (aref hangul-queue 1))
+                  (zerop (aref hangul-queue 2))
+                  (notzerop (hangul-djamo 'cho (aref hangul-queue 0) char)))
+             (aset hangul-queue 1 char)))
+      (progn
+        (hangul-insert-character hangul-queue)
+        nil)
+    (make-hangul-character-from-queue hangul-queue)))
+
 ;; Support function for `hangul-s3p2-input-method'.  Actually, this
 ;; function handles the Hangul Shin Se-beol P2.  KEY is an entered key
 ;; code used for looking up `hangul-s3p2-basic-keymap'."
@@ -152,19 +167,13 @@
                     (hangul3-input-method-jung (jamo-offset hangul-gyeob-mo))
                     nil)
                 (setq hangul-gyeob-mo nil)
-                (let ((syllable (make-hangul-character-from-queue hangul-queue)))
-                  (if (and syllable
-                           (zerop (hangul-djamo 'cho
-                                                (aref hangul-queue 0)
-                                                (jamo-offset char))))
-                      (progn
-                        (quail-delete-region)
-                        (setq hangul-queue (make-vector 6 0))
-                        (setq unread-command-events
-                              (cons key unread-command-events))
-                        (list syllable))
-                    (hangul3-input-method-cho (jamo-offset char))
-                    nil))))
+                (let ((syllable (hangul-s3p2-input-method-cho (jamo-offset char))))
+                    (if syllable
+                        (progn
+                          (quail-delete-region)
+                          (setq hangul-queue (make-vector 6 0)
+                                unread-command-events (cons key unread-command-events))
+                          (list syllable))))))
           (let ((syllable (make-hangul-character-from-queue hangul-queue)))
             (setq hangul-queue (make-vector 6 0))
             (setq hangul-gyeob-mo nil)
