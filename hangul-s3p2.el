@@ -138,6 +138,20 @@ hangul character jamo by jamo, not completing a hangul syllable."
 (defsubst jamo-offset (char)
   (- char ?ㄱ -1))
 
+;; Redefine `hangul-delete-backward-char' in hangul.el.
+;; Just added keyword `:done' return when `hangul-queue' is empty.
+(defun hangul-delete-backward-char ()
+  "Delete the previous hangul character by Jaso units."
+  (interactive)
+  (let ((i 5))
+    (while (and (> i 0) (zerop (aref hangul-queue i)))
+      (setq i (1- i)))
+    (aset hangul-queue i 0))
+  (if (notzerop (apply '+ (append hangul-queue nil)))
+      (hangul-insert-character hangul-queue)
+    (delete-char -1)
+    :done))
+
 (defun yed-hangul-character (cho jung jong)
   "Return a cheod-ga-ggeut combination of CHO, JUNG and JONG.
 It can receive modern hangul jamo for CHO, JUNG and JONG. In that
@@ -233,7 +247,7 @@ Setup `quail-overlay' to the last character."
 
 ;; Copied hangul.el's `hangul3-input-method-cho' and modified to fit to the
 ;; returning version.
-(defun hangul-s3p2-input-method-cho (char)
+(defsubst hangul-s3p2-input-method-cho (char key)
   (if (cond ((and (zerop (aref hangul-queue 0))
                   (zerop (aref hangul-queue 4)))
              (aset hangul-queue 0 char))
@@ -244,21 +258,49 @@ Setup `quail-overlay' to the last character."
       (progn
         (hangul-insert-character hangul-queue)
         nil)
-    (compose-hangul-character hangul-queue)))
+    (prog1
+        (append (compose-hangul-character hangul-queue) nil)
+      (quail-delete-region)
+      (setq hangul-queue (make-vector 6 0)
+            unread-command-events (cons key unread-command-events)))))
 
-;; Redefine `hangul-delete-backward-char' in hangul.el.
-;; Just added keyword `:done' return when `hangul-queue' is empty.
-(defun hangul-delete-backward-char ()
-  "Delete the previous hangul character by Jaso units."
-  (interactive)
-  (let ((i 5))
-    (while (and (> i 0) (zerop (aref hangul-queue i)))
-      (setq i (1- i)))
-    (aset hangul-queue i 0))
-  (if (notzerop (apply '+ (append hangul-queue nil)))
-      (hangul-insert-character hangul-queue)
-    (delete-char -1)
-    :done))
+;; Copied hangul.el's `hangul3-input-method-jung' and modified to fit to the
+;; returning version.
+(defsubst hangul-s3p2-input-method-jung (char key)
+  (if (cond ((and (zerop (aref hangul-queue 2))
+                  (zerop (aref hangul-queue 4)))
+             (aset hangul-queue 2 char))
+            ((and (zerop (aref hangul-queue 3))
+                  (notzerop (hangul-djamo 'jung (aref hangul-queue 2) char)))
+             (aset hangul-queue 3 char)))
+      (progn
+        (hangul-insert-character hangul-queue)
+        nil)
+    (prog1
+        (append (compose-hangul-character hangul-queue) nil)
+      (quail-delete-region)
+      (setq hangul-queue (make-vector 6 0)
+            unread-command-events (cons key unread-command-events)))))
+
+;; Copied hangul.el's `hangul3-input-method-jong' and modified to fit to the
+;; returning version.
+(defsubst hangul-s3p2-input-method-jong (char key)
+  (if (cond ((or (and (zerop (aref hangul-queue 4))
+                      (notzerop (aref hangul-queue 0))
+                      (notzerop (aref hangul-queue 2)))
+                 (zerop (apply #'+ (append hangul-queue nil))))
+             (aset hangul-queue 4 char))
+            ((and (zerop (aref hangul-queue 5))
+                  (notzerop (hangul-djamo 'jong (aref hangul-queue 4) char)))
+             (aset hangul-queue 5 char)))
+      (progn
+        (hangul-insert-character hangul-queue)
+        nil)
+    (prog1
+        (append (compose-hangul-character hangul-queue) nil)
+      (quail-delete-region)
+      (setq hangul-queue (make-vector 6 0)
+            unread-command-events (cons key unread-command-events)))))
 
 ;; Support function for `hangul-s3p2-input-method'.  Actually, this
 ;; function handles the Hangul Shin Se-beol P2.  KEY is an entered key
@@ -278,17 +320,14 @@ Setup `quail-overlay' to the last character."
               (progn
                 (if (zerop (aref hangul-queue 2))
                     (setq hangul-gyeob-mo nil))
-                (hangul3-input-method-jung (jamo-offset moeum))
-                nil)
-            (hangul3-input-method-jong (jamo-offset jaeum))
-            nil))
+                (hangul-s3p2-input-method-jung (jamo-offset moeum) key))
+            (hangul-s3p2-input-method-jong (jamo-offset jaeum) key)))
       ;; not vector
       (if (or (and (>= char ?ㅏ) (<= char ?ㅣ)) (= char ?ㆍ))
           (progn
             (if (zerop (aref hangul-queue 2))
                 (setq hangul-gyeob-mo nil))
-            (hangul3-input-method-jung (jamo-offset char))
-            nil)
+            (hangul-s3p2-input-method-jung (jamo-offset char) key))
         (if (and (>= char ?ㄱ) (<= char ?ㅎ))
             (if (and (zerop (aref hangul-queue 2)) (zerop (aref hangul-queue 4))
                      (= (aref hangul-queue 0) (jamo-offset ?ㅇ))
@@ -299,17 +338,9 @@ Setup `quail-overlay' to the last character."
                        (zerop (aref hangul-queue 2))
                        (setq hangul-gyeob-mo (cdr (assq char '((?ㅋ . ?ㅗ) (?ㅊ . ?ㅜ)
                                                                (?ㅁ . ?ㅡ) (?ㅍ . ?ㆍ))))))
-                  (progn
-                    (hangul3-input-method-jung (jamo-offset hangul-gyeob-mo))
-                    nil)
+                  (hangul-s3p2-input-method-jung (jamo-offset hangul-gyeob-mo) key)
                 (setq hangul-gyeob-mo nil)
-                (let ((syllable (hangul-s3p2-input-method-cho (jamo-offset char))))
-                    (if syllable
-                        (progn
-                          (quail-delete-region)
-                          (setq hangul-queue (make-vector 6 0)
-                                unread-command-events (cons key unread-command-events))
-                          (append syllable nil))))))
+                (hangul-s3p2-input-method-cho (jamo-offset char) key)))
           (let ((syllable (and (notzerop (apply #'+ (append hangul-queue nil)))
                                (compose-hangul-character hangul-queue))))
             (setq hangul-queue (make-vector 6 0))
