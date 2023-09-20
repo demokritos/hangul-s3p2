@@ -332,10 +332,10 @@ Setup `quail-overlay' to the last character."
 (defmacro hangul-register-input-method (package-name language input-method-func
                                                      package-title package-description
                                                      package-help)
-  "Define input method activate function, inactivate function, help function,
+  "Define input method activate function, deactivate function, help function,
 and register input method"
   (let ((activate-func (symbol+ input-method-func '-activate))
-        (inactivate-func (symbol+ input-method-func '-inactivate))
+        (deactivate-func (symbol+ input-method-func '-deactivate))
         (help-func (symbol+ input-method-func '-help)))
     `(progn
        (defun ,activate-func (&optional arg)
@@ -347,14 +347,14 @@ and register input method"
                    (quail-delete-overlays)
                    (setq describe-current-input-method-function nil))
                (kill-local-variable 'input-method-function))
-           (setq inactivate-current-input-method-function ',inactivate-func)
+           (setq deactivate-current-input-method-function ',deactivate-func)
            (setq describe-current-input-method-function ',help-func)
            (quail-delete-overlays)
            (if (eq (selected-window) (minibuffer-window))
                (add-hook 'minibuffer-exit-hook 'quail-exit-from-minibuffer))
            (set (make-local-variable 'input-method-function)
                 ',input-method-func)))
-       (defun ,inactivate-func ()
+       (defun ,deactivate-func ()
          (interactive)
          (,activate-func -1))
        (defun ,help-func ()
