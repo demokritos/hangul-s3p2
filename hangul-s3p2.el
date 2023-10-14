@@ -166,13 +166,13 @@ hangul character jamo by jamo, not completing a hangul syllable."
               (app (funcall 4th) next)
               (guard (funcall cho-p cho))
               (guard (funcall jung-p jung))
-              (guard (funcall jong-p jong))
+              (guard (funcall cho-p jong))
               (guard (funcall jung-p next)))
          (convert
           (substring str 2)
           (concat result (string (hangul-character
-                                  (- cho #x3130)
-                                  (- jung #x3130)
+                                  (jamo-offset cho)
+                                  (jamo-offset jung)
                                   0)))))
         ((and (guard (>= (length str) 3))
               (app (funcall 1st) cho)
@@ -184,9 +184,9 @@ hangul character jamo by jamo, not completing a hangul syllable."
          (convert
           (substring str 3)
           (concat result (string (hangul-character
-                                  (- cho #x3130)
-                                  (- jung #x3130)
-                                  (- jong #x3130))))))
+                                  (jamo-offset cho)
+                                  (jamo-offset jung)
+                                  (jamo-offset jong))))))
         ((and (guard (>= (length str) 2))
               (app (funcall 1st) cho)
               (app (funcall 2nd) jung)
@@ -195,8 +195,8 @@ hangul character jamo by jamo, not completing a hangul syllable."
          (convert
           (substring str 2)
           (concat result (string (hangul-character
-                                  (- cho #x3130)
-                                  (- jung #x3130)
+                                  (jamo-offset cho)
+                                  (jamo-offset jung)
                                   0)))))
         (_ (convert
             (substring str 1)
