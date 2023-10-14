@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t -*-
 ;;; hangul-s3p2.el --- Korean Hangul input method, Shin Se-beol P2
 
 ;; Author: Taegil Bae <esrevinu@gmail.com>
@@ -135,6 +136,81 @@ hangul character jamo by jamo, not completing a hangul syllable."
   (interactive)
   (setq hangul-pureosseugi (not hangul-pureosseugi)))
 
+(defun pureosseujima (start end)
+  "Convert selected pureossen Hangul text to normal Hangul text."
+  (interactive "r")
+  (let ((1st (lambda (a) (aref a 0)))
+        (2nd (lambda (a) (aref a 1)))
+        (3rd (lambda (a) (aref a 2)))
+        (4th (lambda (a) (aref a 3)))
+        (cho-p (lambda (a)
+                 (memq a '(#x3131 #x3132 #x3134 #x3137 #x3138 #x3139
+                                  #x3141 #x3142 #x3143 #x3145 #x3146
+                                  #x3147 #x3148 #x3149 #x314a #x314b
+                                  #x314c #x314d #x314e))))
+        (jung-p (lambda (a)
+                  (memq a '(#x314f #x3150 #x3151 #x3152 #x3153
+                                   #x3154 #x3155 #x3156 #x3157
+                                   #x3158 #x3159 #x315a #x315b
+                                   #x315c #x315d #x315e #x315f
+                                   #x3160 #x3161 #x3162 #x3163))))
+        (jong-p (lambda (a)
+                  (memq a '(#x3131 #x3132 #x3133 #x3134 #x3135
+                                   #x3136 #x3137 #x3139 #x313a
+                                   #x313b #x313c #x313d #x313e
+                                   #x313f #x3140 #x3141 #x3142
+                                   #x3144 #x3145 #x3146 #x3147
+                                   #x3148 #x314a #x314b #x314c
+                                   #x314d #x314e)))))
+    (named-let convert ((str (buffer-substring start end))
+                        (result ""))
+      (pcase str
+        ("" (progn
+              (kill-region start end)
+              (insert result)))
+        ((and (guard (>= (length str) 4))
+              (app (funcall 1st) cho)
+              (app (funcall 2nd) jung)
+              (app (funcall 3rd) jong)
+              (app (funcall 4th) next)
+              (guard (funcall cho-p cho))
+              (guard (funcall jung-p jung))
+              (guard (funcall jong-p jong))
+              (guard (funcall jung-p next)))
+         (convert
+          (substring str 2)
+          (concat result (string (hangul-character
+                                  (- cho #x3130)
+                                  (- jung #x3130)
+                                  0)))))
+        ((and (guard (>= (length str) 3))
+              (app (funcall 1st) cho)
+              (app (funcall 2nd) jung)
+              (app (funcall 3rd) jong)
+              (guard (funcall cho-p cho))
+              (guard (funcall jung-p jung))
+              (guard (funcall jong-p jong)))
+         (convert
+          (substring str 3)
+          (concat result (string (hangul-character
+                                  (- cho #x3130)
+                                  (- jung #x3130)
+                                  (- jong #x3130))))))
+        ((and (guard (>= (length str) 2))
+              (app (funcall 1st) cho)
+              (app (funcall 2nd) jung)
+              (guard (funcall cho-p cho))
+              (guard (funcall jung-p jung)))
+         (convert
+          (substring str 2)
+          (concat result (string (hangul-character
+                                  (- cho #x3130)
+                                  (- jung #x3130)
+                                  0)))))
+        (_ (convert
+            (substring str 1)
+            (concat result (substring str 0 1))))))))
+
 (defsubst jamo-offset (char)
   (- char ?ㄱ -1))
 
@@ -194,15 +270,15 @@ composed of multiple character codes."
         (jung (+ (aref queue 2) (hangul-djamo 'jung (aref queue 2) (aref queue 3))))
         (jong (+ (aref queue 4) (hangul-djamo 'jong (aref queue 4) (aref queue 5)))))
     (if hangul-pureosseugi
-        (pureosseun-hangul-character (if (= cho 0) cho (+ #x3130 cho))
-                                     (if (= jung 0) jung (+ #x3130 jung))
-                                     (if (= jong 0) jong (+ #x3130 jong)))
+        (pureosseun-hangul-character (if (= cho 0) 0 (+ #x3130 cho))
+                                     (if (= jung 0) 0 (+ #x3130 jung))
+                                     (if (= jong 0) 0 (+ #x3130 jong)))
       (if (and (= (aref queue 2) (jamo-offset ?ㆍ))
                (or (notzerop (aref queue 0)) (notzerop (aref queue 4))
                    (notzerop (aref queue 3))))
-          (yed-hangul-character (if (= cho 0) cho (+ #x3130 cho))
-                                (if (= jung 0) jung (+ #x3130 jung))
-                                (if (= jong 0) jong (+ #x3130 jong)))
+          (yed-hangul-character (if (= cho 0) 0 (+ #x3130 cho))
+                                (if (= jung 0) 0 (+ #x3130 jung))
+                                (if (= jong 0) 0 (+ #x3130 jong)))
         (let ((syllable (hangul-character cho jung jong)))
           (if (eq syllable "")
               ""
