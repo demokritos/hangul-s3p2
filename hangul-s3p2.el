@@ -144,24 +144,15 @@ hangul character jamo by jamo, not completing a hangul syllable."
         (3rd (lambda (a) (aref a 2)))
         (4th (lambda (a) (aref a 3)))
         (cho-p (lambda (a)
-                 (memq a '(#x3131 #x3132 #x3134 #x3137 #x3138 #x3139
-                                  #x3141 #x3142 #x3143 #x3145 #x3146
-                                  #x3147 #x3148 #x3149 #x314a #x314b
-                                  #x314c #x314d #x314e))))
+                 (memq a '(?ㄱ ?ㄲ ?ㄴ ?ㄷ ?ㄸ ?ㄹ ?ㅁ ?ㅂ ?ㅃ ?ㅅ
+                               ?ㅆ ?ㅇ ?ㅈ ?ㅉ ?ㅊ ?ㅋ ?ㅌ ?ㅍ ?ㅎ))))
         (jung-p (lambda (a)
-                  (memq a '(#x314f #x3150 #x3151 #x3152 #x3153
-                                   #x3154 #x3155 #x3156 #x3157
-                                   #x3158 #x3159 #x315a #x315b
-                                   #x315c #x315d #x315e #x315f
-                                   #x3160 #x3161 #x3162 #x3163))))
+                  (memq a '(?ㅏ ?ㅐ ?ㅑ ?ㅒ ?ㅓ ?ㅔ ?ㅕ ?ㅖ ?ㅗ ?ㅘ ?ㅙ
+                                ?ㅚ ?ㅛ ?ㅜ ?ㅝ ?ㅞ ?ㅟ ?ㅠ ?ㅡ ?ㅢ ?ㅣ))))
         (jong-p (lambda (a)
-                  (memq a '(#x3131 #x3132 #x3133 #x3134 #x3135
-                                   #x3136 #x3137 #x3139 #x313a
-                                   #x313b #x313c #x313d #x313e
-                                   #x313f #x3140 #x3141 #x3142
-                                   #x3144 #x3145 #x3146 #x3147
-                                   #x3148 #x314a #x314b #x314c
-                                   #x314d #x314e)))))
+                  (memq a '(?ㄱ ?ㄲ ?ㄳ ?ㄴ ?ㄵ ?ㄶ ?ㄷ ?ㄹ ?ㄺ ?ㄻ ?ㄼ
+                                ?ㄽ ?ㄾ ?ㄿ ?ㅀ ?ㅁ ?ㅂ ?ㅄ ?ㅅ ?ㅆ ?ㅇ
+                                ?ㅈ ?ㅊ ?ㅋ ?ㅌ ?ㅍ ?ㅎ)))))
     (named-let convert ((str (buffer-substring start end))
                         (result ""))
       (pcase str
