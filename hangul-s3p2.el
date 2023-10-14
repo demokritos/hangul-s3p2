@@ -202,6 +202,35 @@ hangul character jamo by jamo, not completing a hangul syllable."
             (substring str 1)
             (concat result (substring str 0 1))))))))
 
+(defun pureosseora (start end)
+  "Convert selected normal Hangul text to pureossen text."
+  (interactive "r")
+  (let* ((str (buffer-substring start end))
+         (eumjeol-p (lambda (c) (and (>= c ?가) (<= c ?힣))))
+         (choseong [?ㄱ ?ㄲ ?ㄴ ?ㄷ ?ㄸ ?ㄹ ?ㅁ ?ㅂ ?ㅃ ?ㅅ
+                        ?ㅆ ?ㅇ ?ㅈ ?ㅉ ?ㅊ ?ㅋ ?ㅌ ?ㅍ ?ㅎ])
+         (jungseong [?ㅏ ?ㅐ ?ㅑ ?ㅒ ?ㅓ ?ㅔ ?ㅕ ?ㅖ ?ㅗ ?ㅘ ?ㅙ
+                         ?ㅚ ?ㅛ ?ㅜ ?ㅝ ?ㅞ ?ㅟ ?ㅠ ?ㅡ ?ㅢ ?ㅣ])
+         (jongseong [0 ?ㄱ ?ㄲ ?ㄳ ?ㄴ ?ㄵ ?ㄶ ?ㄷ ?ㄹ ?ㄺ ?ㄻ ?ㄼ
+                       ?ㄽ ?ㄾ ?ㄿ ?ㅀ ?ㅁ ?ㅂ ?ㅄ ?ㅅ ?ㅆ ?ㅇ
+                       ?ㅈ ?ㅊ ?ㅋ ?ㅌ ?ㅍ ?ㅎ])
+         (decompose (lambda (c)
+                      (let* ((w (- c ?가))
+                             (z (% w 28))
+                             (v (/ w 28))
+                             (y (% v 21))
+                             (x (/ v 21)))
+                        (if (zerop z)
+                            (string (aref choseong x) (aref jungseong y))
+                          (string (aref choseong x)
+                                  (aref jungseong y)
+                                  (aref jongseong z))))))
+         (result (apply 'concat (mapcar (lambda (c) (if (funcall eumjeol-p c)
+                                                    (funcall decompose c)
+                                                  (string c))) str))))
+    (kill-region start end)
+    (insert result)))
+
 (defsubst jamo-offset (char)
   (- char ?ㄱ -1))
 
